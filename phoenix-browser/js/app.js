@@ -47,6 +47,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
     if (!urlValidate.validity.valid) {
       var uri = searchEngineUri.replace('{searchTerms}', input);
+      uri = uri.replace(" ", "+");
       return uri;
     }
 
@@ -161,7 +162,7 @@ window.addEventListener('DOMContentLoaded', function() {
    * @param depth
    */
   function traverseDOMTree(targetDocument, currentElement, depth) {
-    if (currentElement) {
+    if (currentElement && currentElement.nodeType != 3 && currentElement.nodeType != 8) {
       var j;
       var tagName = currentElement.tagName;
       // Prints the node tagName, such as <A>, <IMG>, etc
@@ -169,9 +170,9 @@ window.addEventListener('DOMContentLoaded', function() {
       if (tagName) {
         domarray[domint++] = "&lt;" + currentElement.tagName + "&gt;";
         if (currentElement.id) {
-          targetDocument.writeln("Tag: " + "&lt;" + currentElement.tagName + "&gt;" + " Id: " + currentElement.id);
+          targetDocument.writeln("&lt;" + currentElement.tagName + "&gt;" + " Id: " + currentElement.id);
         } else {
-          targetDocument.writeln("Tag: " + "&lt;" + currentElement.tagName + "&gt;" + " Id: " + "No Id");
+          targetDocument.writeln("&lt;" + currentElement.tagName + "&gt;");
         }
       } else {
         targetDocument.writeln(currentElement.nodeName);
@@ -181,19 +182,22 @@ window.addEventListener('DOMContentLoaded', function() {
       var i = 0;
       var currentElementChild = currentElement.childNodes[i];
       while (currentElementChild) {
-        // Formatting code (indent the tree so it looks nice on the screen)
-        targetDocument.write("<BR>\n");
-        for (j = 0; j < depth; j++) {
-          // &#166 is just a vertical line
-          // &nbsp - non-breaking space
-          targetDocument.write("&nbsp;&nbsp;&#166");
+        if (currentElementChild.nodeType == 1) {
+          // Formatting code (indent the tree so it looks nice on the screen)
+          targetDocument.write("<BR>\n");
+          for (j = 0; j < depth; j++) {
+            // &#166 is just a vertical line
+            // &nbsp - non-breaking space
+            targetDocument.write("&nbsp;&nbsp;&#166");
+          }
+          targetDocument.writeln("<BR>");
+          for (j = 0; j < depth; j++) {
+            targetDocument.write("&nbsp;&nbsp;&#166");
+          }
+          if (tagName) {
+            targetDocument.write("--");
+          }
         }
-        targetDocument.writeln("<BR>");
-        for (j = 0; j < depth; j++) {
-          targetDocument.write("&nbsp;&nbsp;&#166");
-        }
-        if (tagName)
-          targetDocument.write("--");
 
         // Recursively traverse the tree structure of the child node
         traverseDOMTree(targetDocument, currentElementChild, depth + 1);
@@ -205,7 +209,7 @@ window.addEventListener('DOMContentLoaded', function() {
       for (j = 0; j < depth - 1; j++) {
         targetDocument.write("&nbsp;&nbsp;&#166");
       }
-      targetDocument.writeln("&nbsp;&nbsp;");
+      targetDocument.writeln("&nbsp;");
     }
     if (tagName) {
       domarray[domint++] = "&lt;/" + currentElement.tagName + "&gt;";
@@ -221,11 +225,12 @@ window.addEventListener('DOMContentLoaded', function() {
    */
 
   function printDOMTree(domElement, destinationWindow) {
-    // Use destination window to print the tree.  If destinationWIndow is
+    // Use destination window to print the tree.  If destinationWindow is
     // not specified, create a new window and print the tree into that window
     var outputWindow = destinationWindow;
-    if (!outputWindow)
+    if (!outputWindow) {
       outputWindow = window.open();
+    }
 
     // Make a valid html page
     outputWindow.document.open("text/html", "replace");
